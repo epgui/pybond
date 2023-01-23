@@ -1,4 +1,4 @@
-# pybond
+# pybond [![Build](https://github.com/epgui/pybond/actions/workflows/build.yml/badge.svg)](https://github.com/epgui/pybond/actions/workflows/build.yml)
 
 `pybond` is a spying and stubbing library inspired heavily by the
 [clojure `bond` library](https://github.com/circleci/bond/).
