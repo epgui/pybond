@@ -21,7 +21,7 @@ def _function_call(args, kwargs, error, return_value):
     }
 
 
-def _spy(f: Callable):
+def _spy_function(f: Callable):
     """
     Wrap f, returning a new function that keeps track of its call count and
     arguments.
@@ -101,12 +101,24 @@ def stub(*targets, check_function_signatures=True):
             for module, fname, stubf in targets:
                 originalf = getattr(module, fname)
                 # Don't bother checking classes, only check functions
-                if check_function_signatures and not isclass(originalf):
-                    if not function_signatures_match(originalf, stubf):
+                
+                if isclass(originalf):
+                    # For now, spying on classes and class methods is
+                    # unsupported
+                    m.setattr(target=module, name=fname, value=stubf)
+                else:
+                    if (
+                        check_function_signatures
+                        and not function_signatures_match(originalf, stubf)
+                    ):
                         raise ValueError(
                             f"Stub does not match the signature of {fname}."
                         )
-                m.setattr(target=module, name=fname, value=_spy(stubf))
+                    m.setattr(
+                        target=module,
+                        name=fname,
+                        value=_spy_function(stubf),
+                    )
             yield
         except Exception:
             raise
@@ -127,7 +139,7 @@ def spy(*targets):
     ```
     """
     with stub(
-        *[[m, fname, _spy(getattr(m, fname))] for m, fname in targets],
+        *[[m, fname, _spy_function(getattr(m, fname))] for m, fname in targets],
         check_function_signatures=False,
     ):
         yield

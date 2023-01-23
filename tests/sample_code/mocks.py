@@ -11,3 +11,12 @@ def mock_make_a_network_request(
     **kwargs,
 ):
     return {"result": x * 2}
+
+
+def create_mock_datetime(mock_now):
+    class MockDatetime():
+        @staticmethod
+        def now(tz=None):
+            return mock_now
+
+    return MockDatetime

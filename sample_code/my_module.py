@@ -1,4 +1,6 @@
+import datetime
 from typing import Any
+
 import sample_code.other_package as other_package
 
 
@@ -17,3 +19,7 @@ def try_dangerous_things():
         return other_package.dangerous_function()
     except Exception as e:
         return e
+
+
+def use_the_datetime_class_to_get_current_timestamp():
+    return datetime.datetime.now()
