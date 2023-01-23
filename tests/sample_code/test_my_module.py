@@ -3,6 +3,10 @@ from pybond import calls, called_with_args, spy, stub, times_called
 import sample_code.other_package as other_package
 import sample_code.my_module as my_module
 from sample_code.my_module import bar
+from tests.sample_code.mocks import (
+    mock_make_a_network_request,
+    mock_write_to_disk,
+)
 
 
 def test_foo_is_called():
@@ -17,8 +21,8 @@ def test_foo_is_called():
 
 def test_bar_handles_response():
     with stub(
-        [other_package, "make_a_network_request", lambda x: {"result": x * 2}],
-        [other_package, "write_to_disk", lambda _: None],
+        [other_package, "make_a_network_request", mock_make_a_network_request],
+        [other_package, "write_to_disk", mock_write_to_disk],
     ), spy(
         [my_module, "foo"],
     ):
@@ -47,13 +51,13 @@ def test_bar_handles_response():
             {
                 "args": [{"result": 42}],
                 "kwargs": None,
-                "return": None,
+                "return": "Wrote to disk!",
                 "error": None,
             },
             {
                 "args": [{"result": 40}],
                 "kwargs": None,
-                "return": None,
+                "return": "Wrote to disk!",
                 "error": None,
             },
         ]

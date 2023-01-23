@@ -1,4 +1,8 @@
-def make_a_network_request(
+def mock_write_to_disk(x):
+    return "Wrote to disk!"
+
+
+def mock_make_a_network_request(
     x,
     *args,
     y,
@@ -6,8 +10,4 @@ def make_a_network_request(
     use_bit_flip_prevention_technology_for_solar_flares=True,
     **kwargs,
 ):
-    return x
-
-
-def write_to_disk(x):
-    return None
+    return {"result": x * 2}

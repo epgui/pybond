@@ -3,7 +3,7 @@ import sample_code.other_package as other_package
 
 
 def foo(x: Any) -> None:
-    response = other_package.make_a_network_request(x)
+    response = other_package.make_a_network_request(x, y=None)
     other_package.write_to_disk(response)
     return response
 
