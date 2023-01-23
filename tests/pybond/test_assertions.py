@@ -5,6 +5,7 @@ import sample_code.other_package as other_package
 from pybond import (
     called_exactly_once_with_args,
     called_with_args,
+    called_with_exact_args_list,
     spy,
     stub,
     times_called,
@@ -172,3 +173,39 @@ def test_called_exactly_once_with_args_throws_on_unspied_functions():
             kwargs={"nor": "does this"},
         )
     assert e.value.args[0].startswith("The argument is not a spied function.")
+
+
+def test_called_with_exact_args_list():
+    # When there is only one function call
+    with spy([other_package, "make_a_network_request"]):
+        assert not called_with_exact_args_list(
+            other_package.make_a_network_request,
+        )
+        other_package.make_a_network_request(42, 12, y="y", other_arg=True)
+        assert called_with_exact_args_list(
+            other_package.make_a_network_request,
+            args_list=[[42, 12]],
+            kwargs_list=[{"y": "y", "other_arg": True}],
+        )
+
+    # When there are multiple function calls (order matters)
+    with spy([other_package, "make_a_network_request"]):
+        other_package.make_a_network_request(0, y=None)
+        other_package.make_a_network_request(0, y="elephant")
+        other_package.make_a_network_request(42, 12, y="y", other_arg=True)
+        other_package.make_a_network_request(0, y="giraffe")
+        assert called_with_exact_args_list(
+            other_package.make_a_network_request,
+            args_list=[
+                [0],
+                [0],
+                [42, 12],
+                [0],
+            ],
+            kwargs_list=[
+                {"y": None},
+                {"y": "elephant"},
+                {"y": "y", "other_arg": True},
+                {"y": "giraffe"},
+            ],
+        )

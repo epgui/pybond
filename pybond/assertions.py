@@ -24,6 +24,8 @@ def called_with_exact_args_list(f, args_list=None, kwargs_list=None):
     be a spied function.
     """
     fcalls = calls(f)
+    if len(fcalls) == 0:
+        return False
     args_match = len(fcalls) > 0
     kwargs_match = len(fcalls) > 0
     if args_list is not None:
