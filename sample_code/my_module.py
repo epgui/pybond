@@ -10,3 +10,10 @@ def foo(x: Any) -> None:
 
 def bar(x: Any) -> None:
     return foo(x)
+
+
+def try_dangerous_things():
+    try:
+        return other_package.dangerous_function()
+    except Exception as e:
+        return e
