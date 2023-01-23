@@ -1,3 +1,4 @@
+import builtins
 import pytest
 import time
 
@@ -241,13 +242,23 @@ def test_var_kwargs_match(f, g, varkwargs_matching):
 
 
 @pytest.mark.parametrize(
-    "f, g",
+    "f, g, is_special_case",
     [
-        pytest.param(time.time, _fn_with_zero_arguments),
+        pytest.param(time.time, _fn_with_zero_arguments, True),
+        pytest.param(builtins.print, lambda: None, False),
     ],
 )
-def test_function_signatures_match_for_unsupported_callable_special_cases(f, g):
-    assert function_signatures_match(f, g)
+def test_function_signatures_match_for_unsupported_callable_special_cases(
+    f,
+    g,
+    is_special_case,
+):
+    if is_special_case:
+        assert function_signatures_match(f, g)
+    else:
+        with pytest.raises(Exception) as e:
+            function_signatures_match(f, g)
+        assert e.value.args[0] == "unsupported callable"
 
 
 def test_executing_model_functions():
