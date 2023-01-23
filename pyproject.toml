@@ -1,0 +1,39 @@
+[tool.poetry]
+name = "pybond"
+version = "0.1.2"
+description = "pybond is a spying and stubbing library inspired by the clojure bond library."
+authors = ["Guillaume Pelletier <guigui.p@gmail.com>"]
+license = "Eclipse Public License - v 1.0"
+readme = "README.md"
+homepage = "https://github.com/epgui/pybond"
+repository = "https://github.com/epgui/pybond"
+keywords = [
+  "bond",
+  "monkeypatch",
+  "spy",
+  "stub",
+  "clojure",
+  "functional programming",
+]
+classifiers = [
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3.10",
+  "Topic :: Software Development :: Libraries",
+  "Topic :: Software Development :: Testing",
+  "Topic :: Utilities",
+]
+include = ["LICENSE"]
+packages = [
+  { include = "pybond" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
