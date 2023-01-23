@@ -251,3 +251,8 @@ def test_var_kwargs_match(f, g, varkwargs_matching):
 )
 def test_function_signatures_match_for_unsupported_callable_special_cases(f, g):
     assert function_signatures_match(f, g)
+
+
+def test_executing_model_functions():
+    # Execute these functions just to make sure code coverage is exhaustive
+    assert _fn_with_zero_arguments() == None
