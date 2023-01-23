@@ -1,8 +1,8 @@
 from pybond import calls, called_with_args, spy, stub, times_called
 
-import tests.sample_code.other_package as other_package
-import tests.sample_code.my_module as my_module
-from tests.sample_code.my_module import bar
+import sample_code.other_package as other_package
+import sample_code.my_module as my_module
+from sample_code.my_module import bar
 
 
 def test_foo_is_called():

@@ -1,5 +1,5 @@
 from typing import Any
-import tests.sample_code.other_package as other_package
+import sample_code.other_package as other_package
 
 
 def foo(x: Any) -> None:

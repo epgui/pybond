@@ -6,7 +6,7 @@ def was_called(f):
     A predicate to check if `f` was called at least 1 time. Note that `f` must
     be a spied function.
     """
-    return calls(f) > 0
+    return len(calls(f)) > 0
 
 
 def times_called(f, n):

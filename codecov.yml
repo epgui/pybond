@@ -3,3 +3,4 @@ codecov:
 
 ignore:
   - "tests/"
+  - "sample_code/"
