@@ -1,4 +1,7 @@
-# pybond [![Build](https://github.com/epgui/pybond/actions/workflows/build.yml/badge.svg)](https://github.com/epgui/pybond/actions/workflows/build.yml)
+# pybond
+
+[![Build](https://github.com/epgui/pybond/actions/workflows/build.yml/badge.svg)](https://github.com/epgui/pybond/actions/workflows/build.yml)
+[![codecov](https://codecov.io/github/epgui/pybond/branch/main/graph/badge.svg?token=tkq655ROg3)](https://app.codecov.io/github/epgui/pybond)
 
 `pybond` is a spying and stubbing library inspired heavily by the
 [clojure `bond` library](https://github.com/circleci/bond/).
@@ -23,7 +26,7 @@ pyproject.toml
 pybond = "0.1.2"
 ```
 
-## Usage
+## Example usage
 
 Let's say you wanted to test the functions in this module:
 
