@@ -19,9 +19,12 @@ def _kwargs_match(fsig, gsig) -> bool:
     if len(fsig.kwonlyargs) == 0 or len(gsig.kwonlyargs) == 0:
         return fsig.kwonlyargs == gsig.kwonlyargs
     else:
-        f_required = set(fsig.kwonlyargs) - set(fsig.kwonlydefaults.keys())
-        g_required = set(gsig.kwonlyargs) - set(gsig.kwonlydefaults.keys())
-        return f_required == g_required
+        fdefaults = {} if fsig.kwonlydefaults is None else fsig.kwonlydefaults
+        gdefaults = {} if gsig.kwonlydefaults is None else gsig.kwonlydefaults
+        return (
+            set(fsig.kwonlyargs) == set(gsig.kwonlyargs) and
+            set(fdefaults.keys()) == set(gdefaults.keys())
+        )
 
 
 def _varkwargs_match(fsig, gsig) -> bool:
