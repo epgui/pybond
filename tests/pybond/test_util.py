@@ -1,10 +1,7 @@
 import pytest
 import time
 
-from pybond.util import (
-    _fn_with_zero_arguments,
-    function_signatures_match,
-)
+from pybond.util import _fn_with_zero_arguments, function_signatures_match
 
 
 @pytest.mark.parametrize(
