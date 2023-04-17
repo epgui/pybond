@@ -9,7 +9,7 @@ from typing import Any, Callable
 
 from pytest import MonkeyPatch
 
-from pybond.util import function_signatures_match
+from pybond.util import function_signatures_match, is_wrapped_function
 
 
 def _function_call(args, kwargs, error, return_value):
@@ -81,6 +81,22 @@ def calls(f: Callable) -> list[dict[str, Any]]:
         )
 
 
+def _function_signatures_match(originalf, stubf):
+    """
+    Supports both regular functions and decorated functions using
+    functools.wraps
+    """
+    return (
+        (
+            is_wrapped_function(originalf)
+            and function_signatures_match(originalf.__wrapped__, stubf)
+        ) or (
+            not is_wrapped_function(originalf)
+            and function_signatures_match(originalf, stubf)
+        )
+    )
+
+
 @contextmanager
 def stub(*targets, check_function_signatures=True):
     """
@@ -109,7 +125,7 @@ def stub(*targets, check_function_signatures=True):
                 else:
                     if (
                         check_function_signatures
-                        and not function_signatures_match(originalf, stubf)
+                        and not _function_signatures_match(originalf, stubf)
                     ):
                         raise ValueError(
                             f"Stub does not match the signature of {fname}."

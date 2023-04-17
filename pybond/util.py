@@ -60,3 +60,7 @@ def function_signatures_match(f, g):
                 raise
         else:
             raise
+
+
+def is_wrapped_function(f):
+    return hasattr(f, "__wrapped__")
