@@ -1,4 +1,5 @@
 from inspect import getfullargspec
+from typing import Callable
 
 
 def _args_match(fsig, gsig) -> bool:
@@ -62,5 +63,5 @@ def function_signatures_match(f, g):
             raise
 
 
-def is_wrapped_function(f):
+def is_wrapped_function(f: Callable) -> bool:
     return hasattr(f, "__wrapped__")
