@@ -21,10 +21,10 @@ def test_spied_function_throws_exception():
             ]
         )
 
-    with spy([other_package, "dangerous_function"]):
+    with spy((other_package, "dangerous_function")):
         run_tests()
     
-    with stub([other_package, "dangerous_function", other_package.dangerous_function]):
+    with stub((other_package, "dangerous_function", other_package.dangerous_function)):
         run_tests()
 
 
@@ -47,19 +47,19 @@ def test_stub_function_signature_should_match(
     signature_matching,
 ):
     if signature_matching:
-        with stub([target_module, target_function, stub_fn]):
+        with stub((target_module, target_function, stub_fn)):
             my_module.bar(42)
             assert True  # No exception is thrown in the line above
     else:
         with pytest.raises(Exception) as e:
-            with stub([target_module, target_function, stub_fn]):
+            with stub((target_module, target_function, stub_fn)):
                 my_module.bar(42)
         assert e.value.args[0].startswith("Stub does not match the signature of")
 
 
 def test_class_stubbing():
     mock_now = datetime.datetime.now()
-    with stub([datetime, "datetime", create_mock_datetime(mock_now)]):
+    with stub((datetime, "datetime", create_mock_datetime(mock_now))):
         time.sleep(2)
         assert (
             my_module.use_the_datetime_class_to_get_current_timestamp()

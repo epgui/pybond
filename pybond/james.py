@@ -5,18 +5,16 @@ from contextlib import contextmanager
 from copy import deepcopy
 from functools import wraps
 from inspect import isclass
-from typing import Any, Callable
+from typing import Callable
 
 from pytest import MonkeyPatch
 
 from pybond.memory import replace_bound_references_in_memory
 from pybond.util import function_signatures_match, is_wrapped_function
-
-Spyable = Any
-ObjectMap = list[tuple[Spyable, Spyable]]
+from pybond.types import FunctionCall, Spyable, SpyTarget, StubTarget
 
 
-def _function_call(args, kwargs, error, return_value) -> dict:
+def _function_call(args, kwargs, error, return_value) -> FunctionCall:
     return {
         "args": args,
         "kwargs": kwargs,
@@ -25,7 +23,7 @@ def _function_call(args, kwargs, error, return_value) -> dict:
     }
 
 
-def _spy_function(f: Callable) -> Callable:
+def _spy_function(f: Callable) -> Spyable:
     """
     Wrap f, returning a new function that keeps track of its call count and
     arguments.
@@ -67,7 +65,7 @@ def _spy_function(f: Callable) -> Callable:
     return handle_function_call
 
 
-def calls(f: Callable) -> list[dict[str, Any]]:
+def calls(f: Spyable) -> list[FunctionCall]:
     """
     Takes one arg, a function that has previously been spied. Returns a list of
     function call dicts, one per call. Each object contains the keys `args`,
@@ -84,7 +82,7 @@ def calls(f: Callable) -> list[dict[str, Any]]:
         )
 
 
-def _function_signatures_match(originalf: Spyable, stubf: Spyable) -> bool:
+def _function_signatures_match(originalf: Callable, stubf: Callable) -> bool:
     """
     Supports both regular functions and decorated functions using
     functools.wraps
@@ -100,26 +98,43 @@ def _function_signatures_match(originalf: Spyable, stubf: Spyable) -> bool:
     )
 
 
-def _check_if_class_is_instrumentable(original_obj, stub_obj, strict):
+def _check_if_class_is_instrumentable(
+    original_obj: Spyable,
+    stub_obj: Spyable,
+    strict: bool = True,
+) -> None:
     # TODO: implement spying on classes and class methods
     return
 
 
-def _check_if_function_is_instrumentable(original_obj, stub_obj, strict=True):
+def _check_if_function_is_instrumentable(
+    original_obj: Callable,
+    stub_obj: Callable,
+    strict: bool = True,
+) -> None:
     if strict and not _function_signatures_match(original_obj, stub_obj):
         raise ValueError(
             f"Stub does not match the signature of {original_obj.__name__}."
         )
 
 
-def _instrumented_obj(original_obj, stub_obj, strict=True):
+def _instrumented_obj(
+    original_obj: Spyable,
+    stub_obj: Spyable,
+    strict: bool = True,
+) -> Spyable:
     if isclass(original_obj):
         # TODO: implement spying on classes and class methods
         _check_if_class_is_instrumentable(original_obj, stub_obj, strict)
         return stub_obj
-    elif callable(original_obj):
+    elif callable(original_obj) and callable(stub_obj):
         _check_if_function_is_instrumentable(original_obj, stub_obj, strict)
         return _spy_function(stub_obj)
+    elif callable(original_obj) and not callable(stub_obj):
+        raise ValueError(
+            f"Provided stub for Callable {original_obj.__name__} of type "
+            f"{type(stub_obj)} is invalid: pybond expected a Callable type."
+        )
     else:
         raise ValueError(
             f"Object of type {type(original_obj)} is not supported by pybond."
@@ -127,7 +142,7 @@ def _instrumented_obj(original_obj, stub_obj, strict=True):
 
 
 @contextmanager
-def stub(*targets, strict=True):
+def stub(*targets: StubTarget, strict: bool = True):
     """
     Context manager which takes a list of targets to stub and spy on.
 
@@ -161,7 +176,7 @@ def stub(*targets, strict=True):
 
 
 @contextmanager
-def spy(*targets):
+def spy(*targets: SpyTarget):
     """
     Context manager which takes a list of targets to spy on.
 
@@ -174,8 +189,5 @@ def spy(*targets):
         function_calls = calls(my_module.test_function)
     ```
     """
-    with stub(
-        *[[m, fname, _spy_function(getattr(m, fname))] for m, fname in targets],
-        strict=False,
-    ):
+    with stub(*[(m, n, deepcopy(getattr(m, n))) for m, n in targets]):
         yield
