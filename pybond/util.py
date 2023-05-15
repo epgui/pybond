@@ -65,3 +65,19 @@ def function_signatures_match(f, g):
 
 def is_wrapped_function(f: Callable) -> bool:
     return hasattr(f, "__wrapped__")
+
+
+def list_class_attributes(obj: object) -> list[str]:
+    return [
+        attr for attr in dir(obj)
+        if not callable(getattr(obj, attr))
+        and not (attr.startswith("__") and attr.endswith("__"))
+    ]
+
+
+def list_class_methods(obj: object) -> list[str]:
+    return [
+        attr for attr in dir(obj)
+        if callable(getattr(obj, attr))
+        and not (attr.startswith("__") and attr.endswith("__"))
+    ]

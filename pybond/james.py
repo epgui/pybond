@@ -10,7 +10,12 @@ from typing import Callable
 from pytest import MonkeyPatch
 
 from pybond.memory import replace_bound_references_in_memory
-from pybond.util import function_signatures_match, is_wrapped_function
+from pybond.util import (
+    function_signatures_match,
+    is_wrapped_function,
+    list_class_attributes,
+    list_class_methods,
+)
 from pybond.types import FunctionCall, Spyable, SpyTarget, StubTarget
 
 
@@ -65,6 +70,13 @@ def _spy_function(f: Callable) -> Spyable:
     return handle_function_call
 
 
+def _spy_all_methods(obj: object) -> object:
+    obj_methods = list_class_methods(obj)
+    for method_name in obj_methods:
+        setattr(obj, method_name, _spy_function(getattr(obj, method_name)))
+    return obj
+
+
 def calls(f: Spyable) -> list[FunctionCall]:
     """
     Takes one arg, a function that has previously been spied. Returns a list of
@@ -103,8 +115,31 @@ def _check_if_class_is_instrumentable(
     stub_obj: Spyable,
     strict: bool = True,
 ) -> None:
-    # TODO: implement spying on classes and class methods
-    return
+    original_obj_attributes = list_class_attributes(original_obj)
+    original_obj_methods = list_class_methods(original_obj)
+    stub_obj_attributes = list_class_attributes(stub_obj)
+    stub_obj_methods = list_class_methods(stub_obj)
+    if strict:
+        if set(original_obj_attributes) != set(stub_obj_attributes):
+            raise ValueError(
+                "Stub does not have the same set of attributes as "
+                f"{original_obj.__class__.__name__}."
+            )
+        if set(original_obj_methods) != set(stub_obj_methods):
+            raise ValueError(
+                "Stub does not have the same set of methods as "
+                f"{original_obj.__class__.__name__}."
+            )
+        for method_name in original_obj_methods:
+            if not _function_signatures_match(
+                getattr(original_obj, method_name),
+                getattr(stub_obj, method_name),
+            ):
+                raise ValueError(
+                    f"Stub method {stub_obj.__class__.__name__}.{method_name} "
+                    "does not match the signature of "
+                    f"{original_obj.__class__.__name__}.{method_name}."
+                )
 
 
 def _check_if_function_is_instrumentable(
@@ -124,9 +159,8 @@ def _instrumented_obj(
     strict: bool = True,
 ) -> Spyable:
     if isclass(original_obj):
-        # TODO: implement spying on classes and class methods
         _check_if_class_is_instrumentable(original_obj, stub_obj, strict)
-        return stub_obj
+        return _spy_all_methods(stub_obj)
     elif callable(original_obj) and callable(stub_obj):
         _check_if_function_is_instrumentable(original_obj, stub_obj, strict)
         return _spy_function(stub_obj)
