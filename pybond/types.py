@@ -11,6 +11,8 @@ FunctionCall = TypedDict(
     }
 )
 
-Spyable: TypeAlias = Callable | object
+SpyableClass: TypeAlias = Any
+SpyableFunction: TypeAlias = Callable
+Spyable: TypeAlias = SpyableFunction | SpyableClass
 SpyTarget: TypeAlias = Tuple[ModuleType, str]
 StubTarget: TypeAlias = Tuple[ModuleType, str, Spyable]

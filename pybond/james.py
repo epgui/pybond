@@ -1,11 +1,11 @@
 """This module is inspired by clojure's bond library."""
 
-import sys
+import warnings
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import wraps
 from inspect import isclass
-from typing import Callable
+from sys import exc_info
 
 from pytest import MonkeyPatch
 
@@ -16,7 +16,14 @@ from pybond.util import (
     list_class_attributes,
     list_class_methods,
 )
-from pybond.types import FunctionCall, Spyable, SpyTarget, StubTarget
+from pybond.types import (
+    FunctionCall,
+    Spyable,
+    SpyableClass,
+    SpyableFunction,
+    SpyTarget,
+    StubTarget,
+)
 
 
 def _function_call(args, kwargs, error, return_value) -> FunctionCall:
@@ -28,7 +35,7 @@ def _function_call(args, kwargs, error, return_value) -> FunctionCall:
     }
 
 
-def _spy_function(f: Callable) -> Spyable:
+def _spy_function(f: SpyableFunction) -> Spyable:
     """
     Wrap f, returning a new function that keeps track of its call count and
     arguments.
@@ -59,7 +66,7 @@ def _spy_function(f: Callable) -> Spyable:
                 _function_call(
                     args=non_mutated_args,
                     kwargs=non_mutated_kwargs,
-                    error=sys.exc_info(),
+                    error=exc_info(),
                     return_value=None,
                 )
             )
@@ -70,7 +77,7 @@ def _spy_function(f: Callable) -> Spyable:
     return handle_function_call
 
 
-def _spy_all_methods(obj: object) -> object:
+def _spy_all_methods(obj: SpyableClass) -> SpyableClass:
     obj_methods = list_class_methods(obj)
     for method_name in obj_methods:
         setattr(obj, method_name, _spy_function(getattr(obj, method_name)))
@@ -94,7 +101,10 @@ def calls(f: Spyable) -> list[FunctionCall]:
         )
 
 
-def _function_signatures_match(originalf: Callable, stubf: Callable) -> bool:
+def _function_signatures_match(
+    originalf: SpyableFunction,
+    stubf: SpyableFunction,
+) -> bool:
     """
     Supports both regular functions and decorated functions using
     functools.wraps
@@ -110,6 +120,38 @@ def _function_signatures_match(originalf: Callable, stubf: Callable) -> bool:
     )
 
 
+def _check_if_class_methods_are_instrumentable(
+    method_names: list[str],
+    original_obj: Spyable,
+    stub_obj: Spyable,
+) -> None:
+    unsupported_callables = []
+    for method_name in method_names:
+        try:
+            if not _function_signatures_match(
+                getattr(original_obj, method_name),
+                getattr(stub_obj, method_name),
+            ):
+                raise ValueError(
+                    f"Stub method {stub_obj.__name__}.{method_name} does not "
+                    "match the signature of the original "
+                    f"{original_obj.__name__}.{method_name} class method. "
+                    "Please ensure the implementation of the provided stub "
+                    "matches that of the original class, or set the 'strict' "
+                    "option to False."
+                )
+        except TypeError as e:
+            if str(e) == "unsupported callable":
+                unsupported_callables.append(method_name)
+
+    if len(unsupported_callables) > 0:
+        PYBOND_WARNING__unsupported_callables = (
+            "The following methods' signatures cannot be checked: "
+            f"{unsupported_callables}."
+        )
+        warnings.warn(PYBOND_WARNING__unsupported_callables)
+
+
 def _check_if_class_is_instrumentable(
     original_obj: Spyable,
     stub_obj: Spyable,
@@ -122,29 +164,34 @@ def _check_if_class_is_instrumentable(
     if strict:
         if set(original_obj_attributes) != set(stub_obj_attributes):
             raise ValueError(
-                "Stub does not have the same set of attributes as "
-                f"{original_obj.__class__.__name__}."
+                f"Stub object '{stub_obj.__name__}' does not have the same set "
+                f"of attributes as the original '{original_obj.__name__}' "
+                "class. Please ensure the implementation of the provided stub "
+                "matches that of the original class, or set the 'strict' "
+                "option to False.\n"
+                f"Original: {original_obj_attributes}\n"
+                f"Provided: {stub_obj_attributes}"
             )
         if set(original_obj_methods) != set(stub_obj_methods):
             raise ValueError(
-                "Stub does not have the same set of methods as "
-                f"{original_obj.__class__.__name__}."
+                f"Stub object '{stub_obj.__name__}' does not have the same set "
+                f"of methods as the original '{original_obj.__name__}' class. "
+                "Please ensure the implementation of the provided stub matches "
+                "that of the original class, or set the 'strict' option to "
+                "False.\n"
+                f"Original: {original_obj_methods}\n"
+                f"Provided: {stub_obj_methods}"
             )
-        for method_name in original_obj_methods:
-            if not _function_signatures_match(
-                getattr(original_obj, method_name),
-                getattr(stub_obj, method_name),
-            ):
-                raise ValueError(
-                    f"Stub method {stub_obj.__class__.__name__}.{method_name} "
-                    "does not match the signature of "
-                    f"{original_obj.__class__.__name__}.{method_name}."
-                )
+        _check_if_class_methods_are_instrumentable(
+            method_names=original_obj_methods,
+            original_obj=original_obj,
+            stub_obj=stub_obj,
+        )
 
 
 def _check_if_function_is_instrumentable(
-    original_obj: Callable,
-    stub_obj: Callable,
+    original_obj: SpyableFunction,
+    stub_obj: SpyableFunction,
     strict: bool = True,
 ) -> None:
     if strict and not _function_signatures_match(original_obj, stub_obj):
