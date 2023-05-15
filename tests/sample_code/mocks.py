@@ -1,3 +1,6 @@
+from datetime import datetime
+
+
 def mock_write_to_disk(x):
     return "Wrote to disk!"
 
@@ -14,9 +17,9 @@ def mock_make_a_network_request(
 
 
 def create_mock_datetime(mock_now):
-    class MockDatetime():
-        @staticmethod
-        def now(tz=None):
+    class MockDatetime(datetime):
+        @classmethod
+        def now(cls, tz=None):
             return mock_now
 
     return MockDatetime

@@ -1,17 +1,27 @@
 """This module is inspired by clojure's bond library."""
 
-import sys
 from contextlib import contextmanager
 from copy import deepcopy
 from functools import wraps
 from inspect import isclass
-from typing import Callable
+from sys import exc_info
 
 from pytest import MonkeyPatch
 
+from pybond.checks import (
+    check_if_class_is_instrumentable,
+    check_if_function_is_instrumentable,
+)
 from pybond.memory import replace_bound_references_in_memory
-from pybond.util import function_signatures_match, is_wrapped_function
-from pybond.types import FunctionCall, Spyable, SpyTarget, StubTarget
+from pybond.types import (
+    FunctionCall,
+    Spyable,
+    SpyableClass,
+    SpyableFunction,
+    SpyTarget,
+    StubTarget,
+)
+from pybond.util import list_class_methods
 
 
 def _function_call(args, kwargs, error, return_value) -> FunctionCall:
@@ -23,7 +33,7 @@ def _function_call(args, kwargs, error, return_value) -> FunctionCall:
     }
 
 
-def _spy_function(f: Callable) -> Spyable:
+def _spy_function(f: SpyableFunction) -> Spyable:
     """
     Wrap f, returning a new function that keeps track of its call count and
     arguments.
@@ -54,7 +64,7 @@ def _spy_function(f: Callable) -> Spyable:
                 _function_call(
                     args=non_mutated_args,
                     kwargs=non_mutated_kwargs,
-                    error=sys.exc_info(),
+                    error=exc_info(),
                     return_value=None,
                 )
             )
@@ -82,40 +92,11 @@ def calls(f: Spyable) -> list[FunctionCall]:
         )
 
 
-def _function_signatures_match(originalf: Callable, stubf: Callable) -> bool:
-    """
-    Supports both regular functions and decorated functions using
-    functools.wraps
-    """
-    return (
-        (
-            is_wrapped_function(originalf)
-            and function_signatures_match(originalf.__wrapped__, stubf)
-        ) or (
-            not is_wrapped_function(originalf)
-            and function_signatures_match(originalf, stubf)
-        )
-    )
-
-
-def _check_if_class_is_instrumentable(
-    original_obj: Spyable,
-    stub_obj: Spyable,
-    strict: bool = True,
-) -> None:
-    # TODO: implement spying on classes and class methods
-    return
-
-
-def _check_if_function_is_instrumentable(
-    original_obj: Callable,
-    stub_obj: Callable,
-    strict: bool = True,
-) -> None:
-    if strict and not _function_signatures_match(original_obj, stub_obj):
-        raise ValueError(
-            f"Stub does not match the signature of {original_obj.__name__}."
-        )
+def _spy_all_methods(obj: SpyableClass) -> SpyableClass:
+    obj_methods = list_class_methods(obj)
+    for method_name in obj_methods:
+        setattr(obj, method_name, _spy_function(getattr(obj, method_name)))
+    return obj
 
 
 def _instrumented_obj(
@@ -123,13 +104,17 @@ def _instrumented_obj(
     stub_obj: Spyable,
     strict: bool = True,
 ) -> Spyable:
-    if isclass(original_obj):
-        # TODO: implement spying on classes and class methods
-        _check_if_class_is_instrumentable(original_obj, stub_obj, strict)
-        return stub_obj
+    if isclass(original_obj) and isclass(stub_obj):
+        check_if_class_is_instrumentable(original_obj, stub_obj, strict)
+        return _spy_all_methods(stub_obj)
     elif callable(original_obj) and callable(stub_obj):
-        _check_if_function_is_instrumentable(original_obj, stub_obj, strict)
+        check_if_function_is_instrumentable(original_obj, stub_obj, strict)
         return _spy_function(stub_obj)
+    elif isclass(original_obj) and not isclass(stub_obj):
+        raise ValueError(
+            f"Provided stub for class {original_obj.__name__} of type "
+            f"{type(stub_obj)} is invalid: pybond expected a class instance."
+        )
     elif callable(original_obj) and not callable(stub_obj):
         raise ValueError(
             f"Provided stub for Callable {original_obj.__name__} of type "

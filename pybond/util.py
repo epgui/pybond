@@ -54,7 +54,9 @@ def function_signatures_match(f, g):
         # Python. For example, in CPython, some built-in functions defined in C
         # provide no metadata about their arguments.
         if str(e) == "unsupported callable":
-            if [f.__module__, f.__name__] == ["time", "time"]:
+            fmodule = getattr(f, "__module__", None)
+            fname = getattr(f, "__name__", None)
+            if [fmodule, fname] == ["time", "time"]:
                 return function_signatures_match(_fn_with_zero_arguments, g)
             # Add other specific cases here
             else:
@@ -65,3 +67,19 @@ def function_signatures_match(f, g):
 
 def is_wrapped_function(f: Callable) -> bool:
     return hasattr(f, "__wrapped__")
+
+
+def list_class_attributes(obj: object) -> list[str]:
+    return [
+        attr for attr in dir(obj)
+        if not callable(getattr(obj, attr))
+        and not (attr.startswith("__") and attr.endswith("__"))
+    ]
+
+
+def list_class_methods(obj: object) -> list[str]:
+    return [
+        attr for attr in dir(obj)
+        if callable(getattr(obj, attr))
+        and not (attr.startswith("__") and attr.endswith("__"))
+    ]
