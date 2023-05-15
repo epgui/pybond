@@ -18,7 +18,6 @@ def mock_make_a_network_request(
 
 def create_mock_datetime(mock_now):
     class MockDatetime(datetime):
-
         @classmethod
         def now(cls, tz=None):
             return mock_now
