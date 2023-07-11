@@ -87,14 +87,9 @@ def _function_signatures_match(originalf: Callable, stubf: Callable) -> bool:
     Supports both regular functions and decorated functions using
     functools.wraps
     """
-    return (
-        (
-            is_wrapped_function(originalf)
-            and function_signatures_match(originalf.__wrapped__, stubf)
-        ) or (
-            not is_wrapped_function(originalf)
-            and function_signatures_match(originalf, stubf)
-        )
+    return function_signatures_match(
+        originalf.__wrapped__ if is_wrapped_function(originalf) else originalf,
+        stubf.__wrapped__ if is_wrapped_function(stubf) else stubf
     )
 
 
