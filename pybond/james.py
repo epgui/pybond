@@ -189,5 +189,5 @@ def spy(*targets: SpyTarget):
         function_calls = calls(my_module.test_function)
     ```
     """
-    with stub(*[(m, n, deepcopy(getattr(m, n))) for m, n in targets]):
+    with stub(*[(m, n, getattr(m, n)) for m, n in targets]):
         yield
