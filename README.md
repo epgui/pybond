@@ -11,19 +11,19 @@
 pip
 
 ```bash
-pip install pybond==0.1.8
+pip install pybond==0.1.9
 ```
 
 requirements.txt
 
 ```python
-pybond==0.1.8
+pybond==0.1.9
 ```
 
 pyproject.toml
 
 ```toml
-pybond = "0.1.8"
+pybond = "0.1.9"
 ```
 
 ## Example usage
