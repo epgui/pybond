@@ -60,7 +60,7 @@ from sample_code.my_module import bar
 
 
 def test_foo_is_called():
-    with spy((my_module, "foo")):
+    with spy(my_module.foo):
         assert times_called(my_module.foo, 0)
         bar(42)
         assert times_called(my_module.foo, 1)
@@ -71,10 +71,10 @@ def test_foo_is_called():
 
 def test_bar_handles_response():
     with stub(
-        (other_package, "make_a_network_request", lambda x: {"result": x * 2}),
-        (other_package, "write_to_disk", lambda _: None),
+        (other_package.make_a_network_request, lambda x: {"result": x * 2}),
+        (other_package.write_to_disk, lambda _: None),
     ), spy(
-        (my_module, "foo"),
+        my_module.foo,
     ):
         assert times_called(my_module.foo, 0)
         assert times_called(other_package.make_a_network_request, 0)

@@ -1,4 +1,3 @@
-from types import ModuleType
 from typing import Any, Callable, Tuple, TypeAlias, TypedDict
 
 FunctionCall = TypedDict(
@@ -11,6 +10,6 @@ FunctionCall = TypedDict(
     }
 )
 
-Spyable: TypeAlias = Callable | object
-SpyTarget: TypeAlias = Tuple[ModuleType, str]
-StubTarget: TypeAlias = Tuple[ModuleType, str, Spyable]
+Spyable: TypeAlias = Callable | Any
+SpyTarget: TypeAlias = Spyable
+StubTarget: TypeAlias = Tuple[Spyable, Spyable]

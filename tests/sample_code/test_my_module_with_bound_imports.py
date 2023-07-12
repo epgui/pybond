@@ -10,7 +10,7 @@ from tests.sample_code.mocks import (
 
 
 def test_foo_is_called_when_module_uses_bound_imports():
-    with spy((my_module_with_bound_imports, "foo")):
+    with spy(my_module_with_bound_imports.foo):
         assert times_called(my_module_with_bound_imports.foo, 0)
         bar(42)
         assert times_called(my_module_with_bound_imports.foo, 1)
@@ -21,10 +21,10 @@ def test_foo_is_called_when_module_uses_bound_imports():
 
 def test_bar_handles_response_when_module_uses_bound_imports():
     with stub(
-        (other_package, "make_a_network_request", mock_make_a_network_request),
-        (other_package, "write_to_disk", mock_write_to_disk),
+        (other_package.make_a_network_request, mock_make_a_network_request),
+        (other_package.write_to_disk, mock_write_to_disk),
     ), spy(
-        (my_module_with_bound_imports, "foo"),
+        my_module_with_bound_imports.foo,
     ):
         assert times_called(my_module_with_bound_imports.foo, 0)
         assert times_called(other_package.make_a_network_request, 0)
