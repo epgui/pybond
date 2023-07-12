@@ -146,24 +146,27 @@ def stub(*targets: StubTarget, strict: bool = True):
     ```
     import my_module
 
-    with stub([my_module, "test_function", lambda x: 42]):
+    with stub((my_module.test_function, lambda x: 42)):
         assert my_module.test_function("abc") == 42  # True
         function_calls = calls(my_module.test_function)
     ```
     """
     with MonkeyPatch.context() as m:
         try:
-            for module, obj_name, stub_obj in targets:
-                original_obj = getattr(module, obj_name)
-                new_obj = _instrumented_obj(original_obj, stub_obj, strict)
+            for target, stub_obj in targets:
+                new_obj = _instrumented_obj(target, stub_obj, strict)
 
                 # The following only covers imports in the form:
                 #     `import some_module`
-                m.setattr(target=module, name=obj_name, value=new_obj)
+                m.setattr(
+                    target=sys.modules[target.__module__],
+                    name=target.__name__,
+                    value=new_obj,
+                )
 
                 # The following covers bound imports in the form:
                 #     `from some_module import some_object`
-                replace_bound_references_in_memory(m, original_obj, new_obj)
+                replace_bound_references_in_memory(m, target, new_obj)
 
             yield
         except Exception:
@@ -179,10 +182,10 @@ def spy(*targets: SpyTarget):
 
     ```
     import my_module
-    with spy([my_module, "test_function"]):
+    with spy(my_module.test_function):
         my_module.test_function("abc")
         function_calls = calls(my_module.test_function)
     ```
     """
-    with stub(*[(m, n, getattr(m, n)) for m, n in targets]):
+    with stub(*[(t, t) for t in targets]):
         yield

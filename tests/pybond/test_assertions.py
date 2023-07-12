@@ -19,10 +19,10 @@ def test_was_called():
         my_module.bar(42)
         assert was_called(my_module.foo)
 
-    with spy((my_module, "foo")):
+    with spy(my_module.foo):
         run_tests()
 
-    with stub((my_module, "foo", my_module.foo)):
+    with stub((my_module.foo, my_module.foo)):
         run_tests()
 
 
@@ -43,10 +43,10 @@ def test_times_called():
         my_module.bar(42)
         assert times_called(my_module.foo, 4)
 
-    with spy((my_module, "foo")):
+    with spy(my_module.foo):
         run_tests()
 
-    with stub((my_module, "foo", my_module.foo)):
+    with stub((my_module.foo, my_module.foo)):
         run_tests()
 
 
@@ -59,7 +59,7 @@ def test_times_called_throws_on_unspied_functions():
 
 def test_called_with_args():
     # When there is only one function call
-    with spy((other_package, "make_a_network_request")):
+    with spy(other_package.make_a_network_request):
         assert not called_with_args(
             other_package.make_a_network_request,
             args=[42, 12],
@@ -73,7 +73,7 @@ def test_called_with_args():
         )
 
     # When there are multiple function calls (order doesn't matter)
-    with spy((other_package, "make_a_network_request")):
+    with spy(other_package.make_a_network_request):
         other_package.make_a_network_request(0, y=None)
         other_package.make_a_network_request(0, y="elephant")
         other_package.make_a_network_request(42, 12, y="y", other_arg=True)
@@ -118,7 +118,7 @@ def test_called_with_args_throws_on_unspied_functions():
 
 def test_called_exactly_once_with_args():
     # When there is only one function call
-    with spy((other_package, "make_a_network_request")):
+    with spy(other_package.make_a_network_request):
         assert not called_exactly_once_with_args(
             other_package.make_a_network_request,
             args=[42, 12],
@@ -132,7 +132,7 @@ def test_called_exactly_once_with_args():
         )
 
     # When there are multiple function calls (order doesn't matter)
-    with spy((other_package, "make_a_network_request")):
+    with spy(other_package.make_a_network_request):
         other_package.make_a_network_request(0, y=None)
         other_package.make_a_network_request(0, y="elephant")
         other_package.make_a_network_request(42, 12, y="y", other_arg=True)
@@ -177,7 +177,7 @@ def test_called_exactly_once_with_args_throws_on_unspied_functions():
 
 def test_called_with_exact_args_list():
     # When there is only one function call
-    with spy((other_package, "make_a_network_request")):
+    with spy(other_package.make_a_network_request):
         assert not called_with_exact_args_list(
             other_package.make_a_network_request,
         )
@@ -189,7 +189,7 @@ def test_called_with_exact_args_list():
         )
 
     # When there are multiple function calls (order matters)
-    with spy((other_package, "make_a_network_request")):
+    with spy(other_package.make_a_network_request):
         other_package.make_a_network_request(0, y=None)
         other_package.make_a_network_request(0, y="elephant")
         other_package.make_a_network_request(42, 12, y="y", other_arg=True)
