@@ -5,7 +5,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 from functools import wraps
 from inspect import isclass
-from typing import Callable
+from typing import Any, Callable
 
 from pytest import MonkeyPatch
 
@@ -23,6 +23,13 @@ def _function_call(args, kwargs, error, return_value) -> FunctionCall:
     }
 
 
+def maybe_deepcopy(obj: Any) -> Any:
+    try:
+        return deepcopy(obj)
+    except RecursionError:
+        return obj
+
+
 def _spy_function(f: Callable) -> Spyable:
     """
     Wrap f, returning a new function that keeps track of its call count and
@@ -36,8 +43,8 @@ def _spy_function(f: Callable) -> Spyable:
     @wraps(f)
     def handle_function_call(*args, **kwargs):
         # Assume the worst: f might mutate its arguments
-        non_mutated_args = deepcopy(list(args)) if args else None
-        non_mutated_kwargs = deepcopy(dict(kwargs)) if kwargs else None
+        non_mutated_args = maybe_deepcopy(list(args)) if args else None
+        non_mutated_kwargs = maybe_deepcopy(dict(kwargs)) if kwargs else None
         try:
             return_value = f(*args, **kwargs)
             _calls.append(
