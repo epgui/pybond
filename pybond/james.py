@@ -26,7 +26,7 @@ def _function_call(args, kwargs, error, return_value) -> FunctionCall:
 def maybe_deepcopy(obj: Any) -> Any:
     try:
         return deepcopy(obj)
-    except RecursionError:
+    except Exception:
         return obj
 
 
